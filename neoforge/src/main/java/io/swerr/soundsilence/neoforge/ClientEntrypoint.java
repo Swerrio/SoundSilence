@@ -1,30 +1,22 @@
 package io.swerr.soundsilence.neoforge;
 
-import io.swerr.soundsilence.SoundManager;
+import dev.architectury.event.events.client.ClientGuiEvent;
+import io.swerr.soundsilence.MuteHudOverlay;
 import io.swerr.soundsilence.SoundSilenceClient;
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.neoforge.client.event.InputEvent;
-import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.common.NeoForge;
 
-public final class SoundSilenceNeoForgeClient {
+public class ClientEntrypoint {
     public static void register(IEventBus modEventBus) {
+        // Инициализируем общий клиентский код (создание объекта KeyMapping)
         SoundSilenceClient.init();
 
-        modEventBus.register(SoundSilenceNeoForgeClient.class);
-        NeoForge.EVENT_BUS.register(SoundSilenceNeoForgeClient.class);
-    }
+        // Регистрируем обработчики на шину событий мода (для регистрации клавиш и т.д.)
+        modEventBus.register(new ClientModBusEvents());
+        // Регистрируем обработчики на главную шину событий Forge (для обработки ввода)
+        NeoForge.EVENT_BUS.register(new ClientForgeEvents());
 
-    @SubscribeEvent
-    public static void onKeyRegister(RegisterKeyMappingsEvent event) {
-        event.register(SoundSilenceClient.toggleMuteKey);
-    }
-
-    @SubscribeEvent
-    public static void onKeyInput(InputEvent.Key event) {
-        if (SoundSilenceClient.toggleMuteKey.consumeClick()) {
-            SoundManager.toggleMute();
-        }
+        // НОВОЕ: Регистрируем наш оверлей для отрисовки HUD через Architectury API
+        ClientGuiEvent.RENDER_HUD.register(MuteHudOverlay::render);
     }
 }
